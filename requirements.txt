@@ -1,0 +1,7 @@
+# pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
+tqdm
+scipy
+pandas
+matplotlib
+tensorboard
+FFmpeg
