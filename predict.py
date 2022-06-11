@@ -27,8 +27,17 @@ TORCH_GENERATOR.manual_seed(SEED)
 
 
 """ CONSTANTS """
-RESUME_MODEL_DIR = "records/06.05-14.21.09_bs=32_lr=0.25_lradj=0.997_ft=False"
-DROP_KEYS = [ "Generation" ]
+RESUME_MODEL_DIR = "records/06.11-22.37.11_bs=32_lr=0.2_lradj=0.998"
+# DROP_KEYS = [ "Generation" ]
+DROP_KEYS = [
+    "Generation", "Temp", "Temp_m",
+    "測站氣壓", "海平面氣壓", "測站最高氣壓", "測站最低氣壓",
+    "氣溫", "最高氣溫", "最低氣溫",
+    "露點溫度", "相對溼度", "最小相對溼度",
+    "風速", "風向", "最大陣風", "最大陣風風向",
+    "降水量", "降水時數", "日照時數", "日照率", "全天空日射量", "能見度",
+    "日最高紫外線指數", "總雲量", "UV"
+]
 
 
 
@@ -64,7 +73,7 @@ def main(device, args):
     shutil.copy("dataset.py", args.save_dir)
     shutil.copy("functions.py", args.save_dir)
 
-    input_dim = 21 - len(args.drop_keys)
+    input_dim = 44 - len(args.drop_keys)
     model = MyModel(input_dim, device).to(device)
     model.load_state_dict(torch.load(args.resume_model_path))
 
@@ -96,14 +105,12 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=BATCH_SIZE, help="")
     # DROPOUT = float(RESUME_MODEL_DIR.split("_lr=")[0].split("_d=")[1])
     # parser.add_argument("--dropout", type=int, default=DROPOUT, help="")
-    FIT_TEST = bool(RESUME_MODEL_DIR.split("_ft=")[1])
-    parser.add_argument("--fit_test", type=bool, default=FIT_TEST, help="")
     RESUME_MODEL_PATH = f"{RESUME_MODEL_DIR}/best.pt"
     parser.add_argument("--resume_model_path", type=str, default=RESUME_MODEL_PATH, help="")
 
     args = parser.parse_args()
     SAVE_ROOTDIR = "predictions"
-    extra_desc   = f"bs={args.batch_size}_ft={args.fit_test}"
+    extra_desc   = f"bs={args.batch_size}"
     SAVE_SUBDIR  = datetime.now().strftime(f"%m.%d-%H.%M.%S_{extra_desc}")
     SAVE_DIR     = f"{SAVE_ROOTDIR}/{SAVE_SUBDIR}"
     parser.add_argument("--save_dir", type=str, default=SAVE_DIR, help="")

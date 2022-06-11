@@ -4,6 +4,8 @@ import numpy as np
 # from performer_pytorch import Performer
 
 
+activation_function = torch.nn.Mish()
+
 
 """ Functions """
 class MySequential(torch.nn.Module):
@@ -12,47 +14,47 @@ class MySequential(torch.nn.Module):
         assert (2*ratio % 1) == 0
         self.layers_5 = torch.nn.Sequential(
             torch.nn.Linear(input_dim, int(16*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(16*ratio), int(8*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(8*ratio), int(4*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(4*ratio), int(2*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(2*ratio), 1),
-            torch.nn.GELU(),
+            activation_function,
         )
         self.layers_4 = torch.nn.Sequential(
             torch.nn.Linear(input_dim, int(8*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(8*ratio), int(4*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(4*ratio), int(2*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(2*ratio), 1),
-            torch.nn.GELU(),
+            activation_function,
         )
         self.layers_3 = torch.nn.Sequential(
             torch.nn.Linear(input_dim, int(4*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(4*ratio), int(2*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(2*ratio), 1),
-            torch.nn.GELU(),
+            activation_function,
         )
         self.layers_2 = torch.nn.Sequential(
             torch.nn.Linear(input_dim, int(2*ratio)),
-            torch.nn.GELU(),
+            activation_function,
             torch.nn.Linear(int(2*ratio), 1),
-            torch.nn.GELU(),
+            activation_function,
         )
         self.layers_1 = torch.nn.Sequential(
             torch.nn.Linear(input_dim, 1),
-            torch.nn.GELU(),
+            activation_function,
         )
         self.integrate_layers = torch.nn.Sequential(
             torch.nn.Linear(5, 1),
-            torch.nn.GELU(),
+            activation_function,
         )
 
     def forward(self, x):

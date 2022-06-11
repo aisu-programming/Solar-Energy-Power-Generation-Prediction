@@ -26,13 +26,13 @@ def get_lr(optimizer):
         return param_group["lr"]
 
 
-def get_normalized_data(part="Train", module_setting="one-hot", fit_test=False):
+def get_normalized_data(part="Train", module_setting="one-hot"):
 
     assert module_setting in ["one-hot", "original"]
     assert part           in ["All", "Train+Valid", "Train", "Valid", "Test"]
 
-    train_data = pd.read_csv("data/train.csv")
-    test_data  = pd.read_csv("data/test_filled.csv")
+    train_data = pd.read_csv("data/train_v4.csv")
+    test_data  = pd.read_csv("data/test_v4_filled.csv")
     data       = pd.concat((train_data, test_data))
     data.reset_index(inplace=True)
     data.drop("ID", inplace=True, axis=1)
@@ -42,17 +42,21 @@ def get_normalized_data(part="Train", module_setting="one-hot", fit_test=False):
     year  = (datetime.dt.year.values-2020) / 2
     month = (datetime.dt.month.values-1) / 11
     day   = (datetime.dt.day.values-1) / 30
-    data["sin(Year)"]  = pd.Series(np.sin(year*(2*math.pi)))
-    data["cos(Year)"]  = pd.Series(np.cos(year*(2*math.pi)))
-    data["sin(Month)"] = pd.Series(np.sin(month*(2*math.pi)))
-    data["cos(Month)"] = pd.Series(np.cos(month*(2*math.pi)))
-    data["sin(Day)"]   = pd.Series(np.sin(day*(2*math.pi)))
-    data["cos(Day)"]   = pd.Series(np.cos(day*(2*math.pi)))
+    data["sin(Year)"]  = pd.Series((np.sin(year*(2*math.pi))+1)/2)
+    data["cos(Year)"]  = pd.Series((np.cos(year*(2*math.pi))+1)/2)
+    data["sin(Month)"] = pd.Series((np.sin(month*(2*math.pi))+1)/2)
+    data["cos(Month)"] = pd.Series((np.cos(month*(2*math.pi))+1)/2)
+    data["sin(Day)"]   = pd.Series((np.sin(day*(2*math.pi))+1)/2)
+    data["cos(Day)"]   = pd.Series((np.cos(day*(2*math.pi))+1)/2)
     data.drop("Date", inplace=True, axis=1)
 
     STANDARD_NORMALIZE_KEYS = ["Generation", "Temp", "Temp_m", "Irradiance", "Irradiance_m", 
-                               "Capacity", "Lat", "Lon", "Angle",]
-                               # "Pmax", "Vmp", "Imp", "Voc", "Isc", "Efficacy"]
+                               "Capacity", "Lat", "Lon", "Angle",
+                               "測站氣壓", "海平面氣壓", "測站最高氣壓", "測站最低氣壓",
+                               "氣溫", "最高氣溫", "最低氣溫", "露點溫度", "相對溼度", "最小相對溼度",
+                               "風速", "風向", "最大陣風", "最大陣風風向",
+                               "降水量", "降水時數", "日照時數", "日照率", "全天空日射量", "能見度",
+                               "日最高紫外線指數", "總雲量", "UV" ]
     
     RAW_MODULES = [ "MM60-6RT-300", "SEC-6M-60A-295", "AUO PM060MW3 320W", "AUO PM060MW3 325W" ]
     PMAXS       = [          300.0,            295.0,               320.0,               325.0 ]
@@ -86,8 +90,13 @@ def get_normalized_data(part="Train", module_setting="one-hot", fit_test=False):
             module_data_key_not_nan = module_data_key[module_data_key.notna()]
 
             # Process outliers
-            if key in ["Generation", "Temp_m", "Irradiance_m"]:
-                is_outlier = (module_data_key_not_nan-module_data_key_not_nan.mean()).abs() > 3*module_data_key_not_nan.std()
+            if key in ["Generation", "Temp_m", "Irradiance_m", "降水量"]:
+                
+                if   key == "Generation"  : olr = outlier_rate = 3
+                elif key == "Temp_m"      : olr = outlier_rate = 3
+                elif key == "Irradiance_m": olr = outlier_rate = 3
+                elif key == "降水量"       : olr = outlier_rate = 3.5
+                is_outlier = (module_data_key_not_nan-module_data_key_not_nan.mean()).abs() > olr*module_data_key_not_nan.std()
 
                 module_data_key_outlier = module_data_key_not_nan[is_outlier]
                 module_data_key_not_nan = module_data_key_not_nan[~is_outlier]
@@ -124,11 +133,12 @@ def get_normalized_data(part="Train", module_setting="one-hot", fit_test=False):
     # Process test_data
     test_data = data[-len(test_data):]
     test_data["Generation"].fillna(0.0, inplace=True)
-    assert len(test_data) == len(test_data[test_data["Generation"].notna()])
-    assert len(test_data) == len(test_data[test_data["Temp"].notna()])
-    assert len(test_data) == len(test_data[test_data["Temp_m"].notna()])
-    assert len(test_data) == len(test_data[test_data["Irradiance"].notna()])
-    assert len(test_data) == len(test_data[test_data["Irradiance_m"].notna()])
+    assert len(test_data) == test_data["Generation"].notna().sum()
+    assert len(test_data) == test_data["Temp"].notna().sum()
+    assert len(test_data) == test_data["Temp_m"].notna().sum()
+    assert len(test_data) == test_data["Irradiance"].notna().sum()
+    assert len(test_data) == test_data["Irradiance_m"].notna().sum()
+    assert len(test_data) == test_data["降水量"].notna().sum()
 
     # Process train_valid_data
     train_valid_data = data[:len(train_data)]
@@ -136,6 +146,11 @@ def get_normalized_data(part="Train", module_setting="one-hot", fit_test=False):
     train_valid_data = train_valid_data[train_valid_data["Temp"].notna()]
     train_valid_data = train_valid_data[train_valid_data["Irradiance"].notna()]
     train_valid_data = train_valid_data[train_valid_data["Irradiance_m"].notna()]
+    train_valid_data = train_valid_data[train_valid_data["最低氣溫"].notna()]
+    train_valid_data = train_valid_data[train_valid_data["最小相對溼度"].notna()]
+    train_valid_data = train_valid_data[train_valid_data["降水量"].notna()]
+    train_valid_data = train_valid_data[train_valid_data["日最高紫外線指數"].notna()]
+    train_valid_data = train_valid_data[train_valid_data["UV"].notna()]
 
     # Split train_valid_data into train_data & valid_data
     train_data, valid_data = [], []

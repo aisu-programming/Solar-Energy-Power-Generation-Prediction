@@ -23,7 +23,7 @@ TORCH_GENERATOR.manual_seed(SEED)
 
 
 """ CONSTANTS """
-RESUME_MODEL_DIR = "records/06.05-14.21.09_bs=32_lr=0.25_lradj=0.997_ft=False"
+RESUME_MODEL_DIR = "records/06.11-18.33.02_bs=32_lr=0.2_lradj=0.997_ft=False"
 DROP_KEYS = [ "Generation" ]
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda:0")
@@ -47,7 +47,7 @@ def test():
         pin_memory=True, worker_init_fn=seed_worker, generator=TORCH_GENERATOR
     )
 
-    input_dim = 21 - len(DROP_KEYS)
+    input_dim = 43 - len(DROP_KEYS)
     model = MyModel(input_dim, DEVICE).to(DEVICE)
     model.load_state_dict(torch.load(resume_model_path))
 
@@ -93,18 +93,17 @@ def test():
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.2, left=0.05, right=0.95)
 
-    def rotate(i):
-        for mi in range(len(MODULES)):
-            axs[mi].view_init(25+20*math.sin((i/90)*math.pi), (i*2)+45+90)
-        return fig
+    # def rotate(i):
+    #     for mi in range(len(MODULES)):
+    #         axs[mi].view_init(25+20*math.sin((i/90)*math.pi), (i*2)+45+90)
+    #     return fig
+    # print("Creating animation...")
+    # anim = animation.FuncAnimation(fig, rotate, frames=360, interval=100, blit=False)
+    # writer = animation.PillowWriter(fps=30)
+    # print("Saving animation...")
+    # anim.save("test.gif", writer=writer)
 
-    print("Creating animation...")
-    anim = animation.FuncAnimation(fig, rotate, frames=360, interval=100, blit=False)
-    writer = animation.PillowWriter(fps=30)
-    print("Saving animation...")
-    anim.save("test.gif", writer=writer)
-
-    # plt.show()
+    plt.show()
     return
 
 

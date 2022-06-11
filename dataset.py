@@ -7,7 +7,7 @@ from functions_new import get_normalized_data
 
 """ Functions """
 class TrainingDataset(torch.utils.data.Dataset):
-    def __init__(self, part, drop_keys=["Generation"], fit_test=False, module=None):
+    def __init__(self, part, drop_keys=["Generation"], module=None):
         super(TrainingDataset).__init__()
         assert part in ["Train", "Valid"]
 
@@ -18,7 +18,7 @@ class TrainingDataset(torch.utils.data.Dataset):
         # if module is not None:
         #     module_setting = "original"
 
-        data = get_normalized_data(part, module_setting, fit_test)
+        data = get_normalized_data(part, module_setting)
 
         self.truth = data["Generation"].values
         # if module != None:
@@ -41,7 +41,7 @@ class TrainingDataset(torch.utils.data.Dataset):
 class PredictionDataset(torch.utils.data.Dataset):
     def __init__(self, drop_keys=["Generation"]):
         super(TrainingDataset).__init__()
-        data = get_normalized_data(part="Test", module_setting="one-hot", fit_test=False)
+        data = get_normalized_data(part="Test", module_setting="one-hot")
         if "Generation" not in drop_keys:
             drop_keys.append("Generation")
         for drop_key in drop_keys:
